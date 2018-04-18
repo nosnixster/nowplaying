@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Now Playing</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:700" rel="stylesheet">
+    <style>
+      #container {
+        background-color: rgba(141,141,141,0.6);
+        position:absolute;
+        left:-40rem;
+        min-width:35rem;
+        width:fit-content;
+        height:10rem;
+        padding:1rem;
+        display:flex;
+        font-family: 'Roboto', sans-serif;
+        font-size:1.5rem;
+        border-radius: 0.8rem;
+      }
+      #albumart {
+        height:10rem;
+        width:10rem;
+        margin-right: 1rem;
+      }
+      #info {
+        color:#FEFEFE;
+      }
+      #info p{
+        margin:1rem;
+      }
+      #eq {
+        position: absolute;
+        float:  right;
+        height: 2.5rem;
+        right: 1rem;
+        bottom: 1rem;
+      }
+    </style>
+</head>
+<body>
+  <div id="container">
+    <img id="albumart" src="" />
+    <div id="info">
+      <p id="title">title</p>
+      <p id="artist">artist</p>
+      <p id="album">album</p>
+    </div>
+    <img id="eq" src="/images/eqalizer.gif" />
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+
+  <script type="text/javascript">
+  var timeout=0;
+  function websocket(){
+    if ("WebSocket" in window){
+     // Let us open a web socket
+     var ws = new WebSocket("ws://localhost:8069");
+
+      ws.onopen = function(){
+        // Web Socket is connected, send data using send()
+        //ws.send("Message to send");
+        //alert("Message is sent...");
+      };
+
+      ws.onmessage = function (evt){
+        var received_msg = evt.data;
+        console.log(JSON.parse(received_msg));
+        //alert("Message is received...");
+        var data = JSON.parse(received_msg);
+
+        if($("#container")[0].style.left == "-40rem"){
+          $("#albumart").attr("src", "data:image/jpeg;base64,"+data.artfile);
+          $("#title").text(data.title);
+          $("#artist").text(data.artist);
+          $("#album").text(data.album);
+          $("#container").animate({left: '1rem'}, 1000, 'swing');
+          timeout = window.setTimeout(function(){
+            $("#container").animate({left: '-40rem'}, 900, 'swing');
+          }, 5000);
+
+        }else{
+          clearTimeout(timeout);
+          timeout=0;
+          $("#container").animate({left: '-40rem'},
+           {duration:900, easing:'swing', complete:function(){
+              timeout=0;
+              $("#albumart").attr("src", "data:image/jpeg;base64,"+data.artfile);
+              $("#title").text(data.title);
+              $("#artist").text(data.artist);
+              $("#album").text(data.album);
+              $("#container").animate({left: '1em'}, 1000);
+              timeout = window.setTimeout(function(){
+                $("#container").animate({left: '-40rem'}, 900, 'swing');
+              }, 5000);
+            }
+          });
+        }
+      };
+
+      ws.onclose = function(){
+        // websocket is closed.
+        //alert("Connection is closed...");
+        WebSocketTest();
+      };
+
+      window.onbeforeunload = function(event) {
+        socket.close();
+      };
+    }else{
+      // The browser doesn't support WebSocket
+      alert("WebSocket NOT supported by your Browser!");
+    }
+  }
+  websocket();
+</script>
+
+</body>
+</html>
